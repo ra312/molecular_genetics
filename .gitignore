@@ -31,3 +31,29 @@
 # Debug files
 *.dSYM/
 *.su
+
+#Bio Sciences Files
+*.bed
+*.bedgraph
+*.tdf
+#MS Office Files
+*.xlsx
+*.docx
+#graphics files
+*.png
+#auxiliary files
+*.out
+*.csv
+*.out
+*.o
+*.rtf
+#LaTex auxiliary files
+*.aux
+*.log
+*.gz
+#Concrete files
+analyze.c
+get_min_max2.c
+#OS generated files
+.DS_Store
+.DS_Store?
