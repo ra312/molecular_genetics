@@ -1,3 +1,65 @@
+*.swp
+*.lock
+*.cpp
+*.index
+*.egit
+*.version
+*.tree
+*.init
+*.properties
+*.fdx
+*.frq
+*.fnm
+*.frm
+*.resources
+*.gen
+*.nrm
+*.til
+*.tis
+*.prx
+*.tii
+*.xmi
+*.json
+*.libhover
+*.setup
+*.fdt
+*.xml
+*.prefs
+*.launch
+*.zip
+*.pdom
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
 # Object files
 *.o
 *.ko
