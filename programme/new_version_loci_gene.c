@@ -146,14 +146,21 @@ int* AllocateMoreMemToIntArray(int* array, int old_size, int new_size)
 // // 	}
 // 	return new_array;
 // }
-tLocus* ReadLocusValues(char* genes_file, int* NUMBER_OF_LOCI)
+tChrom* ReadLocusValues(char* genes_file)
 {
-	int NUM = 50000;
+	int NUM = 30000;
 	
 	char* chr;
 	char* chr_num;
 	char sex;
 	chr = (char*) malloc(sizeof(char)*5);
+	tChrom* Chrom = (tChrom*) malloc(sizeof(tChrom)*23);
+	int k,i;
+	for (k=0; k<23; k++) 
+	{
+		Chrom[k].Loci = (tLocus*) malloc(sizeof(tLocus)*NUM);
+		Chrom[k].N = NUM;
+	}
 
 	long long start;
 	long long end;
@@ -168,13 +175,25 @@ tLocus* ReadLocusValues(char* genes_file, int* NUMBER_OF_LOCI)
 		exit(-1);
 	}
 	
-	int k;
 	k=0;
-	tLocus* Loci = (tLocus*) malloc(sizeof(tLocus)*NUM);
+	int Loci_Number_at_Chr[23];
+	for (k=0; k<23; k++) 
+	{
+		Loci_Number_at_Chr[k]=0;
+		if ( (Chrom[k].Loci = (tLocus*) malloc(sizeof(tLocus)*NUM))==NULL)
+		{
+			printf("Memory could not be allocated\n");
+		}
+		printf("testing\n");
+		for (i=0; i<NUM; i++) Chrom[k].Loci[i].value =0;
+		printf("testing\n");
+	}
+	int LociNumber;
+	//reading Loci and saving them to the correct chromosome
 	while ( (fscanf(file,"%s %lld %lld %lf",chr,&start,&end,&value))!=EOF)
 	{
 		//chrom_num=atoi(chr+3);
-
+printf("192££££\n");
 		if (strstr(chr,"Y")) 
 		{
 			sex = 'Y';
@@ -191,111 +210,65 @@ tLocus* ReadLocusValues(char* genes_file, int* NUMBER_OF_LOCI)
 			chrom_num=atoi(chr+3);
 		
 		}
-		//printf("chrom_num = %i\n",chrom_num);
-		strcpy(Loci[k].chr,chr);
-		Loci[k].chr_num=chrom_num;
-				
-		Loci[k].start=start;
-		Loci[k].end=end;
-		
-		Loci[k].value=value;
-		Loci[k].min=0.0;
-		Loci[k].min=0.0;
-		k++;
-		if (k==NUM)
+		//printf("Catching seg fault\n");
+		printf("210:Loci_Number_at_Chr[%i]=%i\n",chrom_num, Loci_Number_at_Chr[chrom_num]);
+//		strcpy(Loci[k].chr,chr);
+//		Loci[k].chr_num=chrom_num;
+		LociNumber = Loci_Number_at_Chr[chrom_num];
+		printf("214L LociNumber = %i\n",LociNumber);
+		printf("chrom_num = %i\n",chrom_num);
+		printf("start = %i\n",start);
+		Chrom[chrom_num].Loci[LociNumber].start=start;
+				printf("216:Catching seg fault\n");
+//		Chrom[chrom_num].Loci[LociNumber].end = end;
+
+//		Chrom[chrom_num].sex=sex;
+//		Chrom[chrom_num].Loci[LociNumber].value = value;		
+		Loci_Number_at_Chr[chrom_num]++;
+		LociNumber = Loci_Number_at_Chr[chrom_num];
+		printf("220:LociNumber = %i\n",LociNumber);
+				printf("Catching seg fault\n");
+		if (LociNumber == NUM)
 		{
 			printf("Allocating more memory ... \n");
-			Loci=AllocateMoreMemToLoci(Loci, NUM,2*NUM);
-			NUM=2*NUM;
-		}
-		
-	}
-
-	
-	*NUMBER_OF_LOCI=k;
-	fclose(file);
-
-	return Loci;
-}
-tChrom* FromLociToChrom(tLocus* Loci, int NUMBER_OF_LOCI)
-{
-	tChrom* Chrom = (tChrom*) malloc(sizeof(tChrom)*23);
-	int initial_size = 5000;
-		int i,k;
-	for (k=0; k<23; k++)
-	{
-		Chrom[k].Loci = (tLocus*) malloc(sizeof(tLocus)*NUMBER_OF_LOCI);
-	}
-	
-
-	
-	int N;
-	for (k=0; k<23; k++)
-	{
-		N = 0;
-		for (i=0; i<NUMBER_OF_LOCI;i++)
-		{
-			if (Loci[i].chr_num == k)
+//			int NUMBER = LociNumber;
+			Chrom[i].Loci=AllocateMoreMemToLoci(Chrom[chrom_num].Loci ,LociNumber, 2*LociNumber);
+			if (Chrom[i].Loci)
 			{
-				Chrom[k].Loci[N++]=Loci[i];
-				if (N == initial_size)
-				{
-					printf("Chromosome array overflown\n");
-					return NULL;
-				}
+				Loci_Number_at_Chr[chrom_num] = LociNumber*2;
 			}
-		}// for i
-		Chrom[i].N=N;
+			else
+			{
+				printf("230: Memory could not be allocated\n");
+			}
+		}
+		
 	}
-	for (k=0; i<23; i++)
+//	*NUMBER_OF_LOCI=k;
+	
+	fclose(file);
+	return Chrom;
+}
+void PrintChromosome(tChrom* Chrom, int chromosome_number)
+{
+	int i,j;
+	int k = chromosome_number;
+	printf("Chromosome %i\n",k);
+	//Chrom[k].N = number of Loci in N-th chromosome
+	//Chrom[k].Loci[i] = i-th Locus with Chrom[k].Loci[i].matched values
+	for (i=0; i<Chrom[k].N; i++)
 	{
-		for (i=0; i<Chrom[k].N; i++)
+
+		for (j=0; j<Chrom[k].Loci[i].matched; j++)
 		{
-			printf("Chr[%i].Loci[%i].name = %s\n",k,i,Chrom[k].Loci[i].name);
+			printf("gene = %5s", Chrom[k].Loci[i].name);
+			printf("start = %10lld", Chrom[k].Loci[i].start);
+			printf("end = %10lld", Chrom[k].Loci[i].end);
+			printf(" value = 1.7%f\n",Chrom[k].Loci[i].value);			
 		}
 	}
-	return NULL;
-
 }
 
-void PrintLocuss(tLocus* Loci, int N, char* parameter)
-{
-	int k;
-	int j;
-	
-	if (strcmp(parameter,"Genes")==0)
-	{
-		for (k=0; k<N; k++)
-		{		
-				
-			printf("[%3i]:gene=%10s, chr=%5s, start=%12lld, end=%12lld\n",k,Loci[k].name, Loci[k].chr, Loci[k].start, Loci[k].end);
-				
-			
-			for (j=0; j<Loci[k].matched; j++)
-			{
-				printf("\t\t  %1.8lf\n",Loci[k].values[j]);
-			} 		
-		}// for k
-
-	}// if
-	else if (strcmp(parameter,"Loci")==0)
-	{
-		
-		for (k=0; k<N; k++)
-		{		
-printf("[%3i]:gene=%10s, chr=%5s, start=%12lld, end=%12lld, value = %1.8lf\n",k,Loci[k].name, Loci[k].chr, Loci[k].start, Loci[k].end,Loci[k].value);
-		}// for k
-
-	}// else if 
-	else
-	{
-		printf("Wrong parameter\n");
-	}
-	
-//printf("[%3i]:gene=%10s, chr=%5s, start=%12lld, end=%12lld, value=%1.8lf\n",k,Loci[k].name, Loci[k].chr, Loci[k].start, Loci[k].end, Loci[k].mode);
-		
-	return;	
-}
 tLocus* ReadGenes(char* selected_genes_file, int *NUMBER_OF_SELECTED_GENES)
 {
 	FILE *file;
@@ -318,7 +291,9 @@ tLocus* ReadGenes(char* selected_genes_file, int *NUMBER_OF_SELECTED_GENES)
 
 	double start;
 	double end;
-	
+	tChrom* Genes = (tChrom*) malloc(sizeof(tChrom)*23);
+	int chr_index[23];
+	for (k=0; k<23; k++) chr_index[k]=0;
 	while ( (fscanf(file,"%s %lf %lf %s",chr,&start,&end,name))!=EOF)
 	{
 		strcpy(SelectedGenes[k].chr,chr);
@@ -345,46 +320,46 @@ tLocus* ReadGenes(char* selected_genes_file, int *NUMBER_OF_SELECTED_GENES)
 	return SelectedGenes;
 }
 // FIND MIN VALUE AMONG ALL GENE VALUES WITHIN EACH CHROMOSOME
-void MinMax(tLocus* ReadLoci, int NUMBER_OF_LOCI, tLocus* SelectedLoci, int NUMBER_OF_SELECTED_LOCI)
-{
-	//MinMax computes MIN and MAX per each gene in SelectedLoci
-	int k,j;
-	double swap;
-	double min;
-	double max;
-	for (k=0; k<NUMBER_OF_SELECTED_LOCI; k++)
-	{
-		min=+200.0;
-		max=-200.0;
-		for (j=0; j<NUMBER_OF_LOCI; j++)
-		{
-			if (!strcmp(SelectedLoci[k].name,ReadLoci[j].name))
-			{
-				
-				if (ReadLoci[j].value<min) 
-				{
-//					printf("Min\n");
-					min=ReadLoci[j].value;
-				}
-				if (ReadLoci[j].value>max)
-				{
-							max=ReadLoci[j].value;
-				} 
-			}
-		}//for j
-		for (j=0; j<NUMBER_OF_LOCI; j++)
-			if (!strcmp(SelectedLoci[k].name,ReadLoci[j].name))
-			{
-				ReadLoci[j].min=min;
-				ReadLoci[j].max=max;
-			}
-	
-	}//for k
-			
-	
-
-	return;
-}
+// void MinMax(tLocus* ReadLoci, int NUMBER_OF_LOCI, tLocus* SelectedLoci, int NUMBER_OF_SELECTED_LOCI)
+// {
+// 	//MinMax computes MIN and MAX per each gene in SelectedLoci
+// 	int k,j;
+// 	double swap;
+// 	double min;
+// 	double max;
+// 	for (k=0; k<NUMBER_OF_SELECTED_LOCI; k++)
+// 	{
+// 		min=+200.0;
+// 		max=-200.0;
+// 		for (j=0; j<NUMBER_OF_LOCI; j++)
+// 		{
+// 			if (!strcmp(SelectedLoci[k].name,ReadLoci[j].name))
+// 			{
+// 				
+// 				if (ReadLoci[j].value<min) 
+// 				{
+// //					printf("Min\n");
+// 					min=ReadLoci[j].value;
+// 				}
+// 				if (ReadLoci[j].value>max)
+// 				{
+// 							max=ReadLoci[j].value;
+// 				} 
+// 			}
+// 		}//for j
+// 		for (j=0; j<NUMBER_OF_LOCI; j++)
+// 			if (!strcmp(SelectedLoci[k].name,ReadLoci[j].name))
+// 			{
+// 				ReadLoci[j].min=min;
+// 				ReadLoci[j].max=max;
+// 			}
+// 	
+// 	}//for k
+// 			
+// 	
+// 
+// 	return;
+// }
 double MeanValue(tLocus* Loci, int NUMBER_OF_LOCI, double* weights, char* parameter)
 {
 	double sum=0.0;
@@ -415,68 +390,7 @@ double MeanValue(tLocus* Loci, int NUMBER_OF_LOCI, double* weights, char* parame
 	return sum;
 }
 
-double Dispersion(tLocus* Loci, int NUMBER_OF_LOCI, double* weights, char* parameter)
-{
-	double quadr_mean, arithm_mean;
-	int k;
-	int added;
-	double volume;
-	
-	added=0;
-	
-	if (strcmp(parameter,"Genes")==0)
-	{
-			
-		quadr_mean=arithm_mean=0.0;
-		volume = 0.0;
-		for (k=0; k<NUMBER_OF_LOCI; k++)
-		{
-			added++;
-			arithm_mean	+= Loci[k].sign*Loci[k].omega;
-			volume += weights[k]*Loci[k].omega;
-		}
-		arithm_mean = arithm_mean / volume; // conditional expectation.
-// 		printf("Genes: arithm_mean = %f\n",arithm_mean);
-		for (k=0; k<NUMBER_OF_LOCI; k++)
-		{
-			// printf("Loci[%i].value=%f\n", k, Loci[k].value);
-// 			printf("Loci[%i].omega=%i\n",k,Loci[k].omega);
-// 			printf("weights[%i]=%f\n",k, weights[k]);
-			quadr_mean 	+= pow(0.0+Loci[k].sign-arithm_mean, 2.0)*Loci[k].omega*weights[k];
-// 			printf("Genes:	[%i]:quadr_mean = %f\n",k,quadr_mean);
 
-		}
-		quadr_mean = quadr_mean / ((float)volume);
-// 		printf("volume - %f\n",volume);
-//    		printf("Genes:	quadr_mean = %f\n",quadr_mean);
-	
-	}
-	else if (strcmp(parameter,"Loci")==0)
-	{
-		quadr_mean=arithm_mean=0.0;
-		volume = 0.0;
-		for (k=0; k<NUMBER_OF_LOCI; k++)
-		{	
-			arithm_mean	+= Loci[k].sign*weights[k]*(1-0*Loci[k].omega);
-			volume		+= weights[k]*(1-0*Loci[k].omega);
-		}
-		arithm_mean = arithm_mean / volume;
-		for (k=0; k<NUMBER_OF_LOCI; k++)
-		{
-			quadr_mean +=pow(0.0+Loci[k].sign-arithm_mean, 2.0)*weights[k]*(1-0*Loci[k].omega);
-		}
-		quadr_mean = quadr_mean / volume;
-   			//printf("Loci:	quadr_mean = %f\n",quadr_mean);
-
-	}
-	else
-	{
-	// 	printf("Else executed\n");
-	}
-	
-	return quadr_mean;
-
-}
 int LociOverLap(tLocus ReadGene, tLocus SelectedGene);
 void MatchValues(tLocus* ReadLoci, int NUMBER_OF_LOCI,tLocus* SelectedLoci, int NUMBER_OF_SELECTED_LOCI)
 {
@@ -498,17 +412,16 @@ void MatchValues(tLocus* ReadLoci, int NUMBER_OF_LOCI,tLocus* SelectedLoci, int 
 		matched=0;
 		for (i=0; i<NUMBER_OF_LOCI; i++)
 		{
-		//	printf("SelectedLoci[%i].chr = %s,\t ReadLoci[%i].chr = %s\n",k, SelectedLoci[k].chr, i, ReadLoci[i].chr);
+
 			if (!strcmp(SelectedLoci[k].chr,ReadLoci[i].chr))
 			{
-		//		printf("ReadLoci[%i].start = %lld,\t ReadLoci[%i].end = %lld\n",i,ReadLoci[i].start, i, ReadLoci[i].end);
-		//		printf("SelectedLoci[%i].start = %lld,\t SelectedLoci[%i].end = %lld\n",i,SelectedLoci[i].start, i, SelectedLoci[i].end);
+			
 				if (LociOverLap(ReadLoci[i], SelectedLoci[k]))
 				{
 						values_buffer[matched] = ReadLoci[i].value;
 						signs_buffer[matched]=ReadLoci[i].sign;
 						matched++;
-		//				printf("LociOverlap: i = %i\n",i);
+						printf("LociOverlap: i = %i\n",i);
 
 						ReadLoci[i].omega=1;			
 						strcpy(ReadLoci[i].name, SelectedLoci[k].name);
@@ -703,278 +616,7 @@ void PrintGenes(tLocus* Loci, int NUMBER_OF_LOCI)
 	}
 }
 
-double* init_weights(int NUMBER_OF_LOCI, tLocus* ReadLoci, double w1, double w2)
-{
-	int k;
-	double* weights = (double*) malloc(sizeof(double)*NUMBER_OF_LOCI);
-	
-	for (k=0; k<NUMBER_OF_LOCI; k++) weights[k]=0.0;
-	
-	for (k=0; k<NUMBER_OF_LOCI; k++)
-	if (ReadLoci[k].omega==1) 
-	{
-		weights[k]=w1;
-	}
-	else
-	{
-		weights[k]=w2;
-	}
-return weights;
-}
-double WindowDispersionArray(double* signs, int start, int end)
-{
-	int k;
-	
-	double quadr_mean;
-	double arithm_mean;
-	
-	quadr_mean=arithm_mean=0.0;
-	double length = (double) (end-start);
-	
-//	printf("WindowDispersionArray: length = %f\n",length);
-	for (k=start; k<end; k++)
-	{
-			arithm_mean	+= signs[k];
-	}
-	arithm_mean = arithm_mean / length;
-	for (k=start; k<end; k++)
-	{
-		quadr_mean 	+= (signs[k]-arithm_mean)*(signs[k]-arithm_mean);
-	}
-	quadr_mean = quadr_mean / length;
-	return quadr_mean;
-}
-double WindowDispersion(tLocus* Loci, int start, int end)
-{
-	int k;
-	
-	double quadr_mean;
-	double arithm_mean;
-	
-	quadr_mean=arithm_mean=0.0;
-	double length = (double) (end-start);
-	for (k=start; k<end; k++)
-	{
-			arithm_mean	+= Loci[k].value;
-	}
-	arithm_mean = arithm_mean / length;
-	for (k=start; k<end; k++)
-	{
-		quadr_mean 	+= (Loci[k].value-arithm_mean)*(Loci[k].value-arithm_mean);
-	}
-	quadr_mean = quadr_mean / length;
-	return quadr_mean;
-}
-double SignsDispersion(int* values, int N)
-{
-	int k;
-	double quadr_mean;
-	double arithm_mean;
-	
-	quadr_mean=arithm_mean=0.0;
-	for (k=0; k<N; k++)
-	{	
-		// 	printf("values[%i]=%i\n",k,values[k]);
-// 			printf("%i:  SignsDispersion: arithm_mean = %f\n",k,arithm_mean);
-			arithm_mean	+= (1.0)*values[k];
-	}
-// 	printf("SignsDispersion: arithm_mean = %f\n",arithm_mean);
-	arithm_mean = arithm_mean / (1.0*N);
-	for (k=0; k<N; k++)
-	{
-		quadr_mean 	+= pow((1.0)*values[k]-arithm_mean,2);
-	}
-	quadr_mean = quadr_mean / (1.0*N);
-	return quadr_mean;
-}
-double FloatDispersion(double* values, int N)
-{
-	int k;
-	double quadr_mean;
-	double arithm_mean;
-	
-	quadr_mean=arithm_mean=0.0;
-	for (k=0; k<N; k++)
-	{
-			arithm_mean	+= values[k];
-	}
-	arithm_mean = arithm_mean / N;
-	for (k=0; k<N; k++)
-	{
-		quadr_mean 	+= pow(values[k]-arithm_mean,2);
-	}
-	quadr_mean = quadr_mean / N;
-	return quadr_mean;
 
-}
-typedef struct
-{
-long long start;
-long long end;
-double dispersion;
-} tRegion;
-
-tRegion FindMinWindowDispersionArray(double* signs, long long start, long long end, int sensitivity)
-{
-	long long length, middle;
-	double left, right;
-	tRegion value;
-	// printf("FindMinWindowDispersionArray: start = %lld,\t end = %lld\n",start,end);
-	length = end-start+1;
-// 	printf("Entered FindMinWindowDispersion\n");
-// 	printf("length = %lld\n",length);	
-//  	printf("FindMinWindowDispersionArray: length = %lld\n",length);
-	if (length >  sensitivity)
-	{
-		middle = (start+end)/2;
-
-		left  = WindowDispersionArray(signs, start, middle);
-		right = WindowDispersionArray(signs, middle+1, end);
-//		printf("left = %f,\t right = %f\n",left,right);
-		if (left <= right)
-		{
-//			printf("left<right\n");
-		//	printf("left<right\n");
-//			printf("start = %lld, middle  = %lld\n",start, middle);
-			value = FindMinWindowDispersionArray(signs, start, middle, sensitivity);
-			
-		}
-		else if (left > right)
-		{
-	//		printf("left>right\n");
-			value = FindMinWindowDispersionArray(signs, middle+1, end,sensitivity);
-		
-	//		printf("start = %lld,\t end = %lld\n",start, end);
-		}
-		// else
-// 		{
-// 			printf(" I do not know what to do\n");
-// 		}
-		return value;
-	}// if (length >  sensitivity)
-	value.start = start;
-	value.end = end;
-	value.dispersion=WindowDispersionArray(signs, start, end);
-//	printf("value.dispersion = %f\n",value.dispersion);
-	//printf("value.start = %lld,\t value.end = %lld\n",value.start,value.end);
-	//printf("Exited FindMinWindowDispersion\n");
-	return value;
-}
-tRegion FindMinWindowDispersion(tLocus* Loci, long long start, long long end, int sensitvity)
-{
-	long long length, middle;
-	double left, right;
-	tRegion value;
-
-	length = end-start+1;
-// 	printf("Entered FindMinWindowDispersion\n");
-// 	printf("length = %lld\n",length);	
-// 	printf("start = %lld,\t end = %lld\n",start, end);
-	if (length >  sensitvity)
-	{
-		middle = (start+end)/2;
-
-		left  = WindowDispersion(Loci, start, middle);
-		right = WindowDispersion(Loci, middle+1, end);
-//		printf("left = %f,\t right = %f\n",left,right);
-		if (left <= right)
-		{
-
-//			printf("left<right\n");
-			value = FindMinWindowDispersion(Loci, start, middle,sensitvity);
-			value.dispersion = left;
-	//		printf("value.start = %lld,\t value.end = %lld\n",value.start, value.end);
-		}
-		else if (left > right)
-		{
-	//		printf("left>right\n");
-			value = FindMinWindowDispersion(Loci, middle+1, end,sensitvity);
-			value.dispersion = right;
-	//		printf("start = %lld,\t end = %lld\n",start, end);
-		}
-// 		else
-// 		{
-// 			printf(" I do not know what to do\n");
-// 		}
-		return value;
-	}
-	value.start = start;
-	value.end = end;
-	value.dispersion=WindowDispersion(Loci, start, middle);
-	//printf("value.start = %lld,\t value.end = %lld\n",value.start,value.end);
-	//printf("Exited FindMinWindowDispersion\n");
-	return value;
-
-}
-void FindGenes(tLocus* Loci,  int start, int end)
-{
-	int k;
-
-	int N = end/2; // nearest odd number, we will miss only one gene
-	// range 0 ... N
-	double left;
-	double right;
-	int left_range;
-	int right_range;
-	left = WindowDispersion(Loci, start,N);
-	left_range = N-start+1;
-	right_range = end-N;
-	right = WindowDispersion(Loci,N+1, end);
-	// we minimize dispersion
-	
-	if ( (left < right) && ( left_range>3 ))
-	{
-		FindGenes(Loci, start, N);
-	}
-	else if ( (left > right) && ((end-N)>3))
-	{
-		FindGenes(Loci, N+1, end);
-	}
-	else
-	{
-		
-	}
-	return;	
-}
-void oldFindGenes(tLocus* Loci)
-{
-	int k;
-	int N;
-	int start, end;
-	double min = WindowDispersion(Loci, 5*k,5*(k+1));
-	start = 0;
-	end = 5;
-	for (k=0; k<N; k++)
-	{	
-		
-		if (min < WindowDispersion(Loci, 5*k,5*(k+1)))
-		{
-			start = 5*k;
-			end = 5*(k+1);
-		}
-	}
-	printf("start = %i\n", start);
-	printf("end   = %i\n", end);
-	return;
-	
-}
-void Compute_SignsDispersion_per_Genes(tLocus* Genes, int N)
-{
-	int i;
-	int j;
-//	printf("In Compute_Dispersion_per_Genes\n");
-	for (i=0; i<N; i++)
-	{
-		//printf("Genes[%i].signs==NULL=%i\n",i,Genes[i].signs==NULL);
-// 		for (j=0; j<N; j++)
-// 		{
-// 			printf("Genes[%i].signs[%i]=%i\n",i, j,Genes[i].signs[j]);
-// 		}
-		Genes[i].dispersion = SignsDispersion(Genes[i].signs, Genes[i].matched);
-// 		printf("Genes[%i].dispersion = %f\n",i, Genes[i].dispersion);
-	}
-	return;
-}
 void Compute_Mean_per_Genes(tLocus* Genes, int N)
 {
 	int k,i;
@@ -982,15 +624,15 @@ void Compute_Mean_per_Genes(tLocus* Genes, int N)
 	for (k=0; k<N; k++)
 	{
 		mean = 0.0;
-		for (i=0; i<Genes[k].matched; i++)
+		for (i=0; i<N; i++)
 		{
 			mean  = mean+ Genes[k].values[i];
-			//printf("k= %i, i= %i: mean = %f\n",k,i,mean);
+			printf("k= %i, i= %i: mean = %f\n",k,i,mean);
 		}
 		Genes[k].mean = mean/(1.0* Genes[k].matched);
-//		printf("Genes[%i].matched = %lld\n",k, Genes[k].matched);
+		printf("Genes[%i].matched = %lld\n",k, Genes[k].matched);
 
-//		printf("Genes[%i].mean = %f\n",k, Genes[k].mean);
+		printf("Genes[%i].mean = %f\n",k, Genes[k].mean);
 	}
 	return;
 }
@@ -1169,37 +811,19 @@ int Use_Ref_Gene(char* file_name, tLocus* Loci, int N)
 		counted = 0;
 	for (k=0;k<N; k++)
 	{
-
-//		printf("Loci[%i].chr = %s\n",k,Loci[k].chr);
-
     	while ( (result=fscanf(file,"%s %lld %lld %s",chr,&start,&end,name))!=EOF)
     	{
-  //  		printf("result = %i\n",result);
-
-//     		printf("chr = %s,\t start= %lld,\t end = %lld,\t, name = %s\n",chr,start,end,name);
     		strcpy(Locus.chr, chr);
-//    		printf("counted=%i: Locus.chr = %s\n",counted,Locus.chr);
     		Locus.start = start;
     		Locus.end	= end;
     		strcpy(Locus.name,name);
-  //  		printf("strcmp(Locus.chr,Loci[%i].chr)=%i\n",k,strcmp(Locus.chr,Loci[k].chr));
     	 	if (!strcmp(Locus.chr,Loci[k].chr))
  			{
-
-	
  				if (LociOverLap(Locus, Loci[k]))
  				{
  				    		counted++;
- 					//printf("Overlap:chr = %s,\t start= %lld,\t end = %lld,\t, name = %s\n",chr,start,end,name);
- 					//printf("Locus.name  = %s\n",Locus.name);
  					strcpy(Loci[k].name, Locus.name);
- 					 //printf("Loci[%i].name  = %s\n",k,Loci[k].name);
-// 						values_buffer[matched] = ReadLoci[i].value;
-// 						matched++;
-// 						
-// 						ReadLoci[i].omega=1;			
-// 						strcpy(ReadLoci[i].name, SelectedLoci[k].name);
-					break;
+ 					break;
  				}
 
 			}// if
@@ -1207,82 +831,6 @@ int Use_Ref_Gene(char* file_name, tLocus* Loci, int N)
     	rewind(file);
     	//printf("k=%i: counted = %i\n",k,counted);   
 	}
-
-
-
-	
-//    while ( (fscanf(file,"%s %lf %lf %s",chr,&start,&end,name))!=EOF)
-//    {
-// 	   strcpy(SelectedGenes[k].chr,chr);
-// 	   
-// 	   strcpy(SelectedGenes[k].name,name);
-// 
-// 	   SelectedGenes[k].start=(long long) start;
-// 
-// 	   SelectedGenes[k].end=(long long ) end;
-// 
-// 	   SelectedGenes[k].min=0.0;
-// 	   SelectedGenes[k].min=0.0;
-// 	   k++;
-// 	   if (k==NUM)
-// 	   {
-// 		   printf("Allocating more memory ... \n");
-// 		   SelectedGenes=AllocateMoreMemToLoci(SelectedGenes, NUM,2*NUM);
-// 		   NUM=2*NUM;
-// 	   }
-// 	   //printf("k=%i\n",k);
-//    }
-//    
-//    *NUMBER_OF_SELECTED_GENES=k;
-//    return SelectedGenes;
-//    double* values_buffer = (double*) malloc (sizeof(double)*NUMBER_OF_LOCI);
-//    int k,i;
-//    for (k=0; k<NUMBER_OF_LOCI; k++) values_buffer[k]=0;
-//    int num_matched, matched=0;
-//    for (k=0; k<NUMBER_OF_SELECTED_LOCI;k++)
-//    {
-// 	   ReadLoci[k].omega=0;
-//    }
-//    double* weights = (double*) malloc(sizeof(double)*NUMBER_OF_LOCI);
-//    for (k=0; k<NUMBER_OF_LOCI; k++) weights[k]=0;
-// 
-// 
-//    for (k=0;k<NUMBER_OF_SELECTED_LOCI; k++)
-//    {
-// 	   for (i=0; i<NUMBER_OF_LOCI; i++)
-// 	   {
-// 
-// 		   if (!strcmp(SelectedLoci[k].chr,ReadLoci[i].chr))
-// 		   {
-// 		   
-// 			   if (LociOverLap(ReadLoci[i], SelectedLoci[k]))
-// 			   {
-// 					   
-// 					   values_buffer[matched] = ReadLoci[i].value;
-// 					   matched++;
-// 					   
-// 					   ReadLoci[i].omega=1;			
-// 					   strcpy(ReadLoci[i].name, SelectedLoci[k].name);
-// 			   }
-// 
-// 		   }
-// 	   }//for i
-//    
-// 	   num_matched=num_matched+matched;
-// 	   //printf("[%i]: mathched = %i\n",k,matched);
-// 	   SelectedLoci[k].values = (double*) malloc(sizeof(double)*matched);
-// //		printf("(SelectedLoci[k].values == NULL) = %i\n",SelectedLoci[k].values==NULL);
-// 	   SelectedLoci[k].matched=matched;
-// 	   for (i=0; i<matched; i++) 		
-// 		   SelectedLoci[k].values[i]=values_buffer[i];
-// 	   matched=0;
-// 	   //free(values_buffer);
-//    }//for k
-// 
-//    printf("I have compared %i genes\n",NUMBER_OF_SELECTED_LOCI);
-//    printf("There are %i values identified in %i read  genes\n",num_matched, NUMBER_OF_SELECTED_LOCI);
-//    gene_values_num = num_matched;
-//    printf("There are %i values throughout the bedfile\n",NUMBER_OF_LOCI);
 	return counted;
 }
 
@@ -1362,15 +910,13 @@ double get_size_of_monotone_regions(tLocus* Loci, int N, int* decrease, int* inc
  	{
  		decrease_length_array[k]=0;
  	}
- 	
-	int switch_register;
+	int switch_register=1;
 
 	double decrease_mean=0.0;
+ 	int sensitive_areas=0;
 
-	k=0;
   	if (strcmp(parameter, "Loci")==0)	
   	{
-	  	switch_register=1;
 		while (k<N)
 		{				
 			int tmp_start = k, tmp_length;
@@ -1379,7 +925,6 @@ double get_size_of_monotone_regions(tLocus* Loci, int N, int* decrease, int* inc
 			{
 				while ( (Loci[k].sign == -1) && (Loci[k].omega == 0))
 				{ 
-					//printf("Loci in while\n");
 					decrease_length_array[counter]++;
 					k++;
 				}
@@ -1387,11 +932,7 @@ double get_size_of_monotone_regions(tLocus* Loci, int N, int* decrease, int* inc
 			}
 			else // either end of decrease region or end of Genes region
 			{
-				if (decrease_length_array[counter]>0) 
-				{
-					//printf("decrease_length_array[%i]=%i\n",counter, decrease_length_array[counter]);
-					counter++;
-				}
+				if (decrease_length_array[counter]>0) counter++;
 				k++;
 				if (counter==decrease_length_array_size) 
 				{
@@ -1409,18 +950,15 @@ double get_size_of_monotone_regions(tLocus* Loci, int N, int* decrease, int* inc
 		}//while
 	}
 	else if (strcmp(parameter,"Genes")==0)
-	{	switch_register=1;
+	{	
 		while (k<N)
  		{
  			int tmp_start = k, tmp_length;
-			while (Loci[k].omega == 0) if (k<N) k++; else break;
-			//printf("1414: k = %i\n",k);		
-			if ((switch_register) && (Loci[k].omega == 1))
+			while (Loci[k].omega == 1) if (k<N) k++; else break;		
+			if ((switch_register) && (Loci[k].omega == 0))
 			{
-				//printf("Loci[%i].sign =%i, \t Loci[%i].omega = %i\n",k, Loci[k].sign, k, Loci[k].omega);
-				while ( (Loci[k].sign == -1) && (Loci[k].omega == 1))
+				while ( (Loci[k].sign == -1) && (Loci[k].omega == 0))
 				{ 
-								//	printf("Genes in while\n");
 					decrease_length_array[counter]++;
 					k++;
 				}
@@ -1454,89 +992,70 @@ double get_size_of_monotone_regions(tLocus* Loci, int N, int* decrease, int* inc
 		}//while
 	}
 	
-	
+	printf("!!!!!End get_monotone_regions: decrease_mean = %f\n",decrease_mean);
 // 	*decrease = tmp_decrease;
 // 	*increase = tmp_increase;
- 	int sensitive_areas=0;
 	if (strcmp(parameter,"Genes")==0)
 	{
-	//printf("counter=%i\n",counter);
 	for (i=0; i<counter; i++)
 	{
-		//printf("decrease_length_array[%i]=%i\n",i, decrease_length_array[i]);
 		if (decrease_length_array[i]>=1)
 		{
-		//	printf("adding\n");
-			decrease_mean += ((double)decrease_length_array[i]);
-			sensitive_areas++;
-		}
-	}
-
-	}
-	else if (strcmp(parameter,"Loci")==0)
-	{
-		sensitive_areas=0;
-		for (i=0; i<counter; i++)
-		{
-		//printf("Loci:decrease_length_array[%i]=%i\n",i, decrease_length_array[i]);
-		
-		if (decrease_length_array[i]>=1)
-		{
-			//printf("Decrease_lengt_array[%i]=%i\n",i, decrease_length_array[i]);
+			printf("Decrease_lengt_array[%i]=%i\n",i, decrease_length_array[i]);
 			decrease_mean += ((double)decrease_length_array[i]);
 		//	printf("Loop i = %i, decrease_mean = %f\n",i, decrease_mean);
 			sensitive_areas++;
 		}
-		}
 	}
-//	printf("decrease_mean = %f\n",decrease_mean);
+	}
+	printf("decrease_mean = %f\n",decrease_mean);
 	if (sensitive_areas>0)
 	decrease_mean = decrease_mean /(1.0*sensitive_areas);
 	else decrease_mean = 0.0;
-//	printf("decrease_mean = %f\n",decrease_mean);
+	printf("decrease_mean = %f\n",decrease_mean);
 	free(decrease_length_array);
 	return decrease_mean;
 }
 
-void get_extremum_values(tLocus* Loci, int N, double* min, double* max, char* parameter)
-{
-	int i;
-	
-	
-	*min = +200.0;
-	*max = -200.0;
-	
-	for (i=0; i<N; i++)
-	{
-		if (strcmp(parameter,"Loci")==0)
-		{
-			if (Loci[i].omega==0)
-			{
-//				printf("@@@@^^^^\n");
-				if (Loci[i].value < *min) 
-				{
-//					printf("@@@@^^^^\n");
-					*min = Loci[i].value;
-				}
-				if (Loci[i].value > *max) 
-				{
-//					printf("@@@@^^^^\n");
-					*max = Loci[i].value;
-				}
-			}
-		}
-		else if (strcmp(parameter,"Genes")==0)
-		{
-			if (Loci[i].omega==1)
-			{
-				if (Loci[i].value < *min) *min = Loci[i].value;
-				if (Loci[i].value > *max) *max = Loci[i].value;
-			}
-		}
-	}//	for (i=0; i<N; i++)
-		
-	return;
-}
+// void get_extremum_values(tLocus* Loci, int N, double* min, double* max, char* parameter)
+// {
+// 	int i;
+// 	
+// 	
+// 	*min = +200.0;
+// 	*max = -200.0;
+// 	
+// 	for (i=0; i<N; i++)
+// 	{
+// 		if (strcmp(parameter,"Loci")==0)
+// 		{
+// 			if (Loci[i].omega==0)
+// 			{
+// //				printf("@@@@^^^^\n");
+// 				if (Loci[i].value < *min) 
+// 				{
+// //					printf("@@@@^^^^\n");
+// 					*min = Loci[i].value;
+// 				}
+// 				if (Loci[i].value > *max) 
+// 				{
+// //					printf("@@@@^^^^\n");
+// 					*max = Loci[i].value;
+// 				}
+// 			}
+// 		}
+// 		else if (strcmp(parameter,"Genes")==0)
+// 		{
+// 			if (Loci[i].omega==1)
+// 			{
+// 				if (Loci[i].value < *min) *min = Loci[i].value;
+// 				if (Loci[i].value > *max) *max = Loci[i].value;
+// 			}
+// 		}
+// 	}//	for (i=0; i<N; i++)
+// 		
+// 	return;
+// }
 void DeleteLoci(tLocus* Loci, int N)
 {
 	
@@ -1567,73 +1086,37 @@ int main(int argc, char** argv)
 	tLocus* Loci;
 	tLocus* SelectedGenes; 
 	
+	tChrom* Chrom=	ReadLocusValues(genes_file);
+	//PrintChromosome(Chrom, 5);
 	
-	Loci	=	ReadLocusValues(genes_file, &NUMBER_OF_LOCI);
-	
- 	SelectedGenes = ReadGenes(selected_genes_file,&NUMBER_OF_SELECTED_GENES);
+ 	// SelectedGenes = ReadGenes(selected_genes_file,&NUMBER_OF_SELECTED_GENES);
+// 
+//   	get_monotone_regions(Loci,NUMBER_OF_LOCI,"Loci");
+//   	get_monotone_regions(SelectedGenes,NUMBER_OF_SELECTED_GENES,"Genes");
 
-  	
 	
 	
 	//Matching values from Loci with SelectedGenes
-	MatchValues(Loci,NUMBER_OF_LOCI,SelectedGenes,NUMBER_OF_SELECTED_GENES);
-	get_monotone_regions(Loci,NUMBER_OF_LOCI,"Loci");
-  	get_monotone_regions(SelectedGenes,NUMBER_OF_SELECTED_GENES,"Genes");
+// 	 MatchValues(Loci,NUMBER_OF_LOCI,SelectedGenes,NUMBER_OF_SELECTED_GENES);
 
-	
-// 	int k;
-// 	tLocus* chromosome_5 = (tLocus*) malloc(sizeof(tLocus)*100);
-// 	int counter=0;
-// 	for (k=0; k<NUMBER_OF_LOCI; k++)
-// 	{
-// // 		printf("Looking for chromosome %i\n",k);
-// // 		printf("Loci[%i].chr = %s\n",k,Loci[k].chr);
-// 		if (strcmp(Loci[k].chr,"chr5")==0)
-// 		{
-// 			chromosome_5[counter++]=Loci[k];
-// 			if (k==100)
-// 			{
-// 				printf("Chromosome_5 overflow\n");
-// 			}
-// 			//printf("Loci[%i].chr = %s\n",k, Loci[k].chr);
-// 			//break;
-// 		}
-// 	}
-// 	for (k=0; k<counter; k++)
-// 	{
-// 		//printf("chr5[%i].value = %f\n",k,chromosome_5[k].value);
-// 		chromosome_5[k].omega = 0;
-// 		//printf("chr5[%i].sign = %i\n",k,chromosome_5[k].sign);
-// 	}
- 	int increase, decrease;
- 	double decrease_mean;
-// 	get_monotone_regions(chromosome_5, counter);
-// 	decrease_mean = get_size_of_monotone_regions(chromosome_5, counter, &decrease, &increase, "Loci");
-// 
-// 	printf("chr5 decrease_mean = %f\n",decrease_mean);
-//	printf("Printing loci ...\n");
-	//PrintLocuss(Loci, NUMBER_OF_LOCI,"Loci");
-	
-	
-	 char* reference_genome = argv[3];
+// 	 char* reference_genome = argv[3];
 	//"hg19_RefGene.txt";
 	
 	// 
- 	printf("Looking missing genes in %s ...\n",reference_genome);	
- 	int more_genes_found;
- 	more_genes_found = Use_Ref_Gene("hg19_RefGene_test.txt", Loci, NUMBER_OF_LOCI);
- 	printf("%i new genes have been identified\n",more_genes_found);
+//  	printf("Looking missing genes in %s ...\n",reference_genome);	
+//  	int more_genes_found;
+//  	more_genes_found = Use_Ref_Gene("hg19_RefGene_test.txt", Loci, NUMBER_OF_LOCI);
+//  	printf("%i new genes have been identified\n",more_genes_found);
 // 	printf("Printing updated loci\n");
 // 
 //   printf("Calculating the size of decrease regions with length > %i in Genes ...\n",SENSITIVITY);
 // 
- 	decrease_mean = get_size_of_monotone_regions(Loci, NUMBER_OF_LOCI, &decrease, &increase, "Genes");
- 	printf("Mean length of decrease regions with length > %i in Genes = %f\n",4,decrease_mean);
-//	printf("Genes: Decrease region size = %i,\t Increase region size = %i\n",decrease,increase);
- 	printf("Calculating the size of decrease regions with length >%i in Loci without Genes ...\n",1);
- 	decrease_mean = get_size_of_monotone_regions(Loci, NUMBER_OF_LOCI, &decrease, &increase, "Loci");
- 	printf("Mean length of decrease regions with length > %i in Loci without Genes = %f\n",SENSITIVITY,decrease_mean);
- 	
+//  	decrease_mean = get_size_of_monotone_regions(Loci, NUMBER_OF_LOCI, &decrease, &increase, "Genes");
+//  	printf("Mean length of decrease regions with length > %i in Genes = %f\n",SENSITIVITY,decrease_mean);
+// 	printf("Genes: Decrease region size = %i,\t Increase region size = %i\n",decrease,increase);
+//  	printf("Calculating the size of decrease regions with length >%i in Loci without Genes ...\n",SENSITIVITY);
+//  	decrease_mean = get_size_of_monotone_regions(Loci, NUMBER_OF_LOCI, &decrease, &increase, "Loci");
+//  	printf("Mean length of decrease regions with length >%i in Loci without Genes = %f\n",SENSITIVITY,decrease_mean);
 // //	get_size_of_monotone_regions(Loci, NUMBER_OF_LOCI, &decrease, &increase, "Loci");
 // //	printf("Loci: Decrease region size = %i,\t Increase region size = %i\n",decrease,increase);
 //   // 	PrintLocuss(Loci, NUMBER_OF_LOCI,"Loci");
@@ -1644,26 +1127,18 @@ int main(int argc, char** argv)
 // 
 // 	// int i, length; 
 // // 
-  	Compute_Mode_per_Genes(SelectedGenes, NUMBER_OF_SELECTED_GENES);
-  	Compute_Min_Max_per_Genes(SelectedGenes, NUMBER_OF_SELECTED_GENES);
-	Compute_Mean_per_Genes(SelectedGenes, NUMBER_OF_SELECTED_GENES);
+//   	Compute_Mode_per_Genes(SelectedGenes, NUMBER_OF_SELECTED_GENES);
+//   	Compute_Min_Max_per_Genes(SelectedGenes, NUMBER_OF_SELECTED_GENES);
+//  	Compute_Mean_per_Genes(SelectedGenes, NUMBER_OF_SELECTED_GENES);
 // // 	Compute_SignsDispersion_per_Genes(SelectedGenes, NUMBER_OF_SELECTED_GENES);
-  	int i;
-   	double min, max;
-    printf("Finding minimum and maximun throughout all gene values ...\n");
-   	get_extremum_values(Loci, NUMBER_OF_LOCI, &min, &max, "Genes");
-    printf("Genes region: min = %f,\t max= %f\n",min,max);
-    printf("Finding minimum and maximun throughout loci values excluding gene values ...\n");
-   	get_extremum_values(Loci, NUMBER_OF_LOCI, &min, &max, "Loci");
-    printf("Loci without Genes regions: min = %f,\t max= %f\n",min,max);
-
-
-  	for (i=0; i<NUMBER_OF_SELECTED_GENES; i++)
- 	{
-		printf("Genes[%i]:\t name = %8s,\t min = %f,\t",i, SelectedGenes[i].name, SelectedGenes[i].min); 
-		printf("mean = %f,\t mode = %f,\t", SelectedGenes[i].mean,SelectedGenes[i].mode);
-		printf("max = %f\n", SelectedGenes[i].max);
- 	}	
+//   	int i;
+//   	double min, max;
+//   	for (i=0; i<NUMBER_OF_SELECTED_GENES; i++)
+//  	{
+// 		printf("Genes[%i]:\t name = %8s,\t min = %f,\t",i, SelectedGenes[i].name, SelectedGenes[i].min); 
+// 		printf("mean = %f,\t mode = %f,\t", SelectedGenes[i].mean,SelectedGenes[i].mode);
+// 		printf("max = %f,\t dispersion = %f\n", SelectedGenes[i].max, SelectedGenes[i].dispersion);
+//  	}	
 // // 	tRegion Region = FindMinWindowDispersion(Loci, 0, NUMBER_OF_LOCI, 5);
 // // 	printf("Region.start  = %lld,\t Region.end = %lld, Region.Dispersion = %f\n",Region.start, Region.end, Region.dispersion);
 // 	
@@ -1706,6 +1181,12 @@ int main(int argc, char** argv)
 // //   //	printf("Genes ModeValue=%f\n",	GenesModeValue);
 // //   	printf("\n");	
 // //   	
+//    	printf("Finding minimum and maximun throughout gene values ...\n");
+//    	get_extremum_values(Loci, NUMBER_OF_LOCI, &min, &max, "Genes");
+//    	printf("Genes region: min = %f,\t max= %f\n",min,max);
+//    	printf("Finding minimum and maximun throughout loci values excluding gene values ...\n");
+//    	get_extremum_values(Loci, NUMBER_OF_LOCI, &min, &max, "Loci");
+//    	printf("Loci without Genes regions: min = %f,\t max= %f\n",min,max);
 // // 	
 // // 	for (i=0; i<NUMBER_OF_LOCI; i++)
 // // 	{
