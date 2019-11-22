@@ -4,3 +4,8 @@ A python script parse.py transforms a XML-file igv_session.xml into a Python obj
 The main programme loci_gene.c reads the main pool of genes (all_test.txt) and the malignant genes (selected.txt).
 Then we conduct statistical analysis (computing mode value, mean value, min and max values, dispersion of the gene values in the selected regions) of the drug induced values in the genes and compare the genomic regions according to the mean value and the dispersion.
 
+Compiling
+gcc loci_gene.c -o loci_gene
+
+How to call the C programme?
+./loci_gene 704_704.txt selected.txt
